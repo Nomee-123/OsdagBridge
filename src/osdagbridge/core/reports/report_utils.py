@@ -113,3 +113,55 @@ def _fig_embed(path, caption, width=r'\textwidth', height=None):
             r'}}')
 
 
+
+def render_longtable(headers, rows, column_widths=None):
+    """
+    Generate a LaTeX longtable with repeated headers on every page.
+
+    Args:
+        headers: List of column heading strings.
+        rows: List of rows, each containing cell values.
+        column_widths: Optional list of LaTeX column widths,
+                       e.g. [r'0.25\textwidth', r'0.65\textwidth'].
+    """
+    if not headers:
+        return ""
+
+    n_cols = len(headers)
+
+    if column_widths and len(column_widths) == n_cols:
+        columns = "".join(
+            rf">{{\raggedright\arraybackslash}}p{{{width}}}"
+            for width in column_widths
+        )
+    else:
+        columns = "l" * n_cols
+
+    def format_row(row):
+        cells = [_tex(cell) for cell in row]
+        cells += [""] * (n_cols - len(cells))
+        return " & ".join(cells[:n_cols]) + r" \\"
+
+    header = format_row(headers)
+
+    result = [
+        rf"\begin{{longtable}}{{{columns}}}",
+        r"\hline",
+        header,
+        r"\hline",
+        r"\endfirsthead",
+        r"\hline",
+        header,
+        r"\hline",
+        r"\endhead",
+        r"\hline",
+        r"\endfoot",
+        r"\hline",
+        r"\endlastfoot",
+    ]
+
+    for row in rows:
+        result.append(format_row(row))
+
+    result.append(r"\end{longtable}")
+    return "\n".join(result)
